@@ -10,6 +10,7 @@ const router = useRouter()
 const zonesStore = useZonesStore()
 const mapViewRef = ref()
 const filterMessage = ref('')
+const filterError = ref('')
 const showLayersDropdown = ref(false)
 
 // Stable filter state to prevent flickering
@@ -74,6 +75,144 @@ function selectLayer(layerKey: string) {
   }
 }
 
+// Validate and set row filter
+function setRowFilter(value: number | null) {
+  // Handle empty/cleared input - reset to show all zones
+  if (value === null || value === undefined || isNaN(value)) {
+    zonesStore.setRowFilter(null)
+    stableFilterRow.value = null
+    filterError.value = ''
+    return
+  }
+  
+  // Check for negative values
+  if (value < 0) {
+    filterError.value = `Row cannot be negative. Please enter a value ≥ 0.`
+    zonesStore.setRowFilter(null)
+    stableFilterRow.value = null
+    setTimeout(() => {
+      filterError.value = ''
+    }, 3000)
+    return
+  }
+  
+  // Check if row is within bounds
+  const maxRow = Math.max(...zonesStore.zones.map(zone => zone.row))
+  if (value > maxRow) {
+    filterError.value = `Row ${value} is out of bounds. Maximum row is ${maxRow}.`
+    // Clear the invalid filter
+    zonesStore.setRowFilter(null)
+    stableFilterRow.value = null
+    setTimeout(() => {
+      filterError.value = ''
+    }, 3000)
+    return
+  }
+  
+  zonesStore.setRowFilter(value)
+  filterError.value = ''
+}
+
+// Validate and set col filter
+function setColFilter(value: number | null) {
+  // Handle empty/cleared input - reset to show all zones
+  if (value === null || value === undefined || isNaN(value)) {
+    zonesStore.setColFilter(null)
+    stableFilterCol.value = null
+    filterError.value = ''
+    return
+  }
+  
+  // Check for negative values
+  if (value < 0) {
+    filterError.value = `Column cannot be negative. Please enter a value ≥ 0.`
+    zonesStore.setColFilter(null)
+    stableFilterCol.value = null
+    setTimeout(() => {
+      filterError.value = ''
+    }, 3000)
+    return
+  }
+  
+  // Check if col is within bounds
+  const maxCol = Math.max(...zonesStore.zones.map(zone => zone.col))
+  if (value > maxCol) {
+    filterError.value = `Column ${value} is out of bounds. Maximum column is ${maxCol}.`
+    // Clear the invalid filter
+    zonesStore.setColFilter(null)
+    stableFilterCol.value = null
+    setTimeout(() => {
+      filterError.value = ''
+    }, 3000)
+    return
+  }
+  
+  zonesStore.setColFilter(value)
+  filterError.value = ''
+}
+
+// Handle blur events to catch when inputs are cleared
+function handleRowBlur() {
+  // Check if the input is effectively empty and reset the filter
+  if (stableFilterRow.value === null || stableFilterRow.value === undefined || isNaN(stableFilterRow.value)) {
+    stableFilterRow.value = null
+    zonesStore.setRowFilter(null)
+    // Fit map to show all zones after clearing filter
+    setTimeout(() => {
+      if (mapViewRef.value) {
+        mapViewRef.value.fitBounds()
+      }
+    }, 100)
+  }
+}
+
+function handleColBlur() {
+  // Check if the input is effectively empty and reset the filter
+  if (stableFilterCol.value === null || stableFilterCol.value === undefined || isNaN(stableFilterCol.value)) {
+    stableFilterCol.value = null
+    zonesStore.setColFilter(null)
+    // Fit map to show all zones after clearing filter
+    setTimeout(() => {
+      if (mapViewRef.value) {
+        mapViewRef.value.fitBounds()
+      }
+    }, 100)
+  }
+}
+
+// Handle when input becomes empty string (from backspace)
+function handleRowInput() {
+  // If the input becomes empty, reset the filter and fit map to data
+  if (stableFilterRow.value === null || stableFilterRow.value === undefined || isNaN(stableFilterRow.value)) {
+    stableFilterRow.value = null
+    zonesStore.setRowFilter(null)
+    // Fit map to show all zones after clearing filter
+    setTimeout(() => {
+      if (mapViewRef.value) {
+        mapViewRef.value.fitBounds()
+      }
+    }, 100)
+    return
+  }
+  setRowFilter(stableFilterRow.value)
+}
+
+function handleColInput() {
+  // If the input becomes empty, reset the filter and fit map to data
+  if (stableFilterCol.value === null || stableFilterCol.value === undefined || isNaN(stableFilterCol.value)) {
+    stableFilterCol.value = null
+    zonesStore.setColFilter(null)
+    // Fit map to show all zones after clearing filter
+    setTimeout(() => {
+      if (mapViewRef.value) {
+        mapViewRef.value.fitBounds()
+      }
+    }, 100)
+    return
+  }
+  setColFilter(stableFilterCol.value)
+}
+
 // Click outside handler to close dropdown
 function handleClickOutside(event: Event) {
   const target = event.target as HTMLElement
@@ -88,6 +227,18 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+})
+
+// Watch for significant changes in filtered zones and auto-fit map
+watch(() => zonesStore.filteredCount, (newCount, oldCount) => {
+  // If we went from a small number to a large number (filters cleared), fit map
+  if (oldCount && newCount && newCount > oldCount * 2) {
+    setTimeout(() => {
+      if (mapViewRef.value) {
+        mapViewRef.value.fitBounds()
+      }
+    }, 200)
+  }
 })
 </script>
 
@@ -225,20 +376,42 @@ onUnmounted(() => {
                   class="w-full px-3 py-2 text-sm border rounded-md bg-background"
                   @input="zonesStore.setFilter(stableFilterText)"
                 >
+                
+                <!-- Row/Col Range Info -->
+                <div class="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                  <p class="font-medium mb-1">Valid Ranges:</p>
+                  <div class="space-y-1">
+                    <div class="flex justify-between">
+                      <span>Row:</span>
+                      <span class="font-mono">0 - {{ Math.max(...zonesStore.zones.map(zone => zone.row)) }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>Col:</span>
+                      <span class="font-mono">0 - {{ Math.max(...zonesStore.zones.map(zone => zone.col)) }}</span>
+                    </div>
+                  </div>
+                </div>
+                
                 <div class="space-y-2">
                   <input
                     v-model.number="stableFilterRow"
                     type="number"
+                    min="0"
                     placeholder="Row"
                     class="w-full px-3 py-2 text-sm border rounded-md bg-background"
-                    @input="zonesStore.setRowFilter(stableFilterRow)"
+                    @input="handleRowInput"
+                    @change="setRowFilter(stableFilterRow)"
+                    @blur="handleRowBlur"
                   >
                   <input
                     v-model.number="stableFilterCol"
                     type="number"
+                    min="0"
                     placeholder="Col"
                     class="w-full px-3 py-2 text-sm border rounded-md bg-background"
-                    @input="zonesStore.setColFilter(stableFilterCol)"
+                    @input="handleColInput"
+                    @change="setColFilter(stableFilterCol)"
+                    @blur="handleColBlur"
                   >
 
                   <Button
@@ -254,6 +427,20 @@ onUnmounted(() => {
                   <div v-if="filterMessage" class="text-center">
                     <p class="text-xs text-green-600 dark:text-green-400 font-medium">
                       {{ filterMessage }}
+                    </p>
+                  </div>
+                  
+                  <!-- Filter error message -->
+                  <div v-if="filterError" class="text-center">
+                    <p class="text-xs text-red-600 dark:text-red-400 font-medium">
+                      {{ filterError }}
+                    </p>
+                  </div>
+                  
+                  <!-- Filter behavior hint -->
+                  <div class="text-center">
+                    <p class="text-xs text-muted-foreground">
+                      💡 Clear inputs to show all zones
                     </p>
                   </div>
                 </div>
