@@ -7,11 +7,11 @@ import { processZoneRecords } from '@/utils/geo'
 
 export const useZonesStore = defineStore('zones', () => {
   // State with localStorage persistence
-  const zones = useStorage<ZoneRecord[]>('zone-visualizer-zones', [])
-  const selectedZoneId = useStorage<string | null>('zone-visualizer-selected-zone', null)
-  const filterText = useStorage<string>('zone-visualizer-filter-text', '')
-  const filterRow = useStorage<number | null>('zone-visualizer-filter-row', null)
-  const filterCol = useStorage<number | null>('zone-visualizer-filter-col', null)
+  const zones = useStorage<ZoneRecord[]>('boundr-zones', [])
+  const selectedZoneId = useStorage<string | null>('boundr-selected-zone', null)
+  const filterText = useStorage<string>('boundr-filter-text', '')
+  const filterRow = useStorage<number | null>('boundr-filter-row', null)
+  const filterCol = useStorage<number | null>('boundr-filter-col', null)
 
   // Getters
   const validZones = computed(() => zones.value)
@@ -127,11 +127,11 @@ export const useZonesStore = defineStore('zones', () => {
 
   function clearAllData() {
     // Clear all localStorage data
-    localStorage.removeItem('zone-visualizer-zones')
-    localStorage.removeItem('zone-visualizer-selected-zone')
-    localStorage.removeItem('zone-visualizer-filter-text')
-    localStorage.removeItem('zone-visualizer-filter-row')
-    localStorage.removeItem('zone-visualizer-filter-col')
+    localStorage.removeItem('boundr-zones')
+    localStorage.removeItem('boundr-selected-zone')
+    localStorage.removeItem('boundr-filter-text')
+    localStorage.removeItem('boundr-filter-row')
+    localStorage.removeItem('boundr-filter-col')
 
     // Reset all values
     zones.value = []

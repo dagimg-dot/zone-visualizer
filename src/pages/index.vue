@@ -122,7 +122,7 @@ function clearAllData() {
           <span class="text-2xl font-bold text-muted-foreground">{</span>
           <MapPin class="w-6 h-6 text-primary" />
           <span class="text-2xl font-bold text-muted-foreground">}</span>
-          <span class="text-lg font-semibold tracking-tight ml-2">Zone Visualizer</span>
+          <span class="text-lg font-semibold tracking-tight ml-2">Boundr</span>
         </div>
 
         <!-- Dark mode toggle -->
