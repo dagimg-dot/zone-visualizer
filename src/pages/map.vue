@@ -78,13 +78,13 @@ function selectLayer(layerKey: string) {
 // Validate and set row filter
 function setRowFilter(value: number | null) {
   // Handle empty/cleared input - reset to show all zones
-  if (value === null || value === undefined || isNaN(value)) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
     zonesStore.setRowFilter(null)
     stableFilterRow.value = null
     filterError.value = ''
     return
   }
-  
+
   // Check for negative values
   if (value < 0) {
     filterError.value = `Row cannot be negative. Please enter a value ≥ 0.`
@@ -95,7 +95,7 @@ function setRowFilter(value: number | null) {
     }, 3000)
     return
   }
-  
+
   // Check if row is within bounds
   const maxRow = Math.max(...zonesStore.zones.map(zone => zone.row))
   if (value > maxRow) {
@@ -108,7 +108,7 @@ function setRowFilter(value: number | null) {
     }, 3000)
     return
   }
-  
+
   zonesStore.setRowFilter(value)
   filterError.value = ''
 }
@@ -116,13 +116,13 @@ function setRowFilter(value: number | null) {
 // Validate and set col filter
 function setColFilter(value: number | null) {
   // Handle empty/cleared input - reset to show all zones
-  if (value === null || value === undefined || isNaN(value)) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
     zonesStore.setColFilter(null)
     stableFilterCol.value = null
     filterError.value = ''
     return
   }
-  
+
   // Check for negative values
   if (value < 0) {
     filterError.value = `Column cannot be negative. Please enter a value ≥ 0.`
@@ -133,7 +133,7 @@ function setColFilter(value: number | null) {
     }, 3000)
     return
   }
-  
+
   // Check if col is within bounds
   const maxCol = Math.max(...zonesStore.zones.map(zone => zone.col))
   if (value > maxCol) {
@@ -146,7 +146,7 @@ function setColFilter(value: number | null) {
     }, 3000)
     return
   }
-  
+
   zonesStore.setColFilter(value)
   filterError.value = ''
 }
@@ -154,7 +154,7 @@ function setColFilter(value: number | null) {
 // Handle blur events to catch when inputs are cleared
 function handleRowBlur() {
   // Check if the input is effectively empty and reset the filter
-  if (stableFilterRow.value === null || stableFilterRow.value === undefined || isNaN(stableFilterRow.value)) {
+  if (stableFilterRow.value === null || stableFilterRow.value === undefined || Number.isNaN(stableFilterRow.value)) {
     stableFilterRow.value = null
     zonesStore.setRowFilter(null)
     // Fit map to show all zones after clearing filter
@@ -168,7 +168,7 @@ function handleRowBlur() {
 
 function handleColBlur() {
   // Check if the input is effectively empty and reset the filter
-  if (stableFilterCol.value === null || stableFilterCol.value === undefined || isNaN(stableFilterCol.value)) {
+  if (stableFilterCol.value === null || stableFilterCol.value === undefined || Number.isNaN(stableFilterCol.value)) {
     stableFilterCol.value = null
     zonesStore.setColFilter(null)
     // Fit map to show all zones after clearing filter
@@ -183,7 +183,7 @@ function handleColBlur() {
 // Handle when input becomes empty string (from backspace)
 function handleRowInput() {
   // If the input becomes empty, reset the filter and fit map to data
-  if (stableFilterRow.value === null || stableFilterRow.value === undefined || isNaN(stableFilterRow.value)) {
+  if (stableFilterRow.value === null || stableFilterRow.value === undefined || Number.isNaN(stableFilterRow.value)) {
     stableFilterRow.value = null
     zonesStore.setRowFilter(null)
     // Fit map to show all zones after clearing filter
@@ -199,7 +199,7 @@ function handleRowInput() {
 
 function handleColInput() {
   // If the input becomes empty, reset the filter and fit map to data
-  if (stableFilterCol.value === null || stableFilterCol.value === undefined || isNaN(stableFilterCol.value)) {
+  if (stableFilterCol.value === null || stableFilterCol.value === undefined || Number.isNaN(stableFilterCol.value)) {
     stableFilterCol.value = null
     zonesStore.setColFilter(null)
     // Fit map to show all zones after clearing filter
@@ -376,10 +376,12 @@ watch(() => zonesStore.filteredCount, (newCount, oldCount) => {
                   class="w-full px-3 py-2 text-sm border rounded-md bg-background"
                   @input="zonesStore.setFilter(stableFilterText)"
                 >
-                
+
                 <!-- Row/Col Range Info -->
                 <div class="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
-                  <p class="font-medium mb-1">Valid Ranges:</p>
+                  <p class="font-medium mb-1">
+                    Valid Ranges:
+                  </p>
                   <div class="space-y-1">
                     <div class="flex justify-between">
                       <span>Row:</span>
@@ -391,7 +393,7 @@ watch(() => zonesStore.filteredCount, (newCount, oldCount) => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="space-y-2">
                   <input
                     v-model.number="stableFilterRow"
@@ -429,14 +431,14 @@ watch(() => zonesStore.filteredCount, (newCount, oldCount) => {
                       {{ filterMessage }}
                     </p>
                   </div>
-                  
+
                   <!-- Filter error message -->
                   <div v-if="filterError" class="text-center">
                     <p class="text-xs text-red-600 dark:text-red-400 font-medium">
                       {{ filterError }}
                     </p>
                   </div>
-                  
+
                   <!-- Filter behavior hint -->
                   <div class="text-center">
                     <p class="text-xs text-muted-foreground">
