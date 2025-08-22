@@ -2,7 +2,7 @@
 import type { ZoneRecord } from '@/types/zones'
 import { LCircleMarker, LMap, LPolygon, LPopup, LTileLayer, LTooltip } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useZonesStore } from '@/stores/zones'
 import { convertGeoJSONToLeaflet } from '@/utils/geo'
 
@@ -11,6 +11,35 @@ const zonesStore = useZonesStore()
 // Map state
 const mapRef = ref()
 const selectedZoneId = ref<string | null>(null)
+const currentLayer = ref('osm') // Default layer
+
+// Available tile layers
+const tileLayers = {
+  osm: {
+    name: 'OpenStreetMap',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    type: 'base' as const,
+  },
+  satellite: {
+    name: 'Satellite',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>',
+    type: 'base' as const,
+  },
+  terrain: {
+    name: 'Terrain',
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://opentopomap.org/">OpenTopoMap</a>',
+    type: 'base' as const,
+  },
+  dark: {
+    name: 'Dark',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    type: 'base' as const,
+  },
+}
 
 // Computed properties
 const filteredZones = computed(() => zonesStore.filteredZones)
@@ -60,20 +89,41 @@ const mapOptions = computed(() => {
 })
 
 // Fit map to bounds when zones change
-watch(mapBounds, (newBounds) => {
+watch(mapBounds, (newBounds, oldBounds) => {
   if (newBounds && mapRef.value) {
-    mapRef.value.leafletObject.fitBounds(newBounds, { padding: [20, 20] })
+    // Only fit bounds if the bounds actually changed significantly
+    if (!oldBounds || !boundsAreSimilar(newBounds, oldBounds)) {
+      mapRef.value.leafletObject.fitBounds(newBounds, { padding: [20, 20] })
+    }
   }
 }, { immediate: true })
 
 // Center map on first zone when zones are loaded
-watch(filteredZones, (newZones) => {
-  if (newZones.length > 0 && mapRef.value) {
+watch(filteredZones, (newZones, oldZones) => {
+  // Only center if this is the initial load or if we went from 0 to some zones
+  if (newZones.length > 0 && (!oldZones || oldZones.length === 0) && mapRef.value) {
     const firstZone = newZones[0]
     const centerCoords = convertGeoJSONToLeaflet([firstZone.center.coordinates])[0]
     mapRef.value.leafletObject.setView(centerCoords, 10)
   }
 }, { immediate: true })
+
+// Helper function to check if bounds are similar (prevents unnecessary updates)
+function boundsAreSimilar(bounds1: L.LatLngBounds, bounds2: L.LatLngBounds): boolean {
+  const center1 = bounds1.getCenter()
+  const center2 = bounds2.getCenter()
+
+  // Check if centers are within 0.001 degrees (roughly 100m)
+  const centerDiff = Math.abs(center1.lat - center2.lat) + Math.abs(center1.lng - center2.lng)
+
+  // Check if bounds are roughly the same size by comparing their spans
+  const span1 = bounds1.getNorthEast().distanceTo(bounds1.getSouthWest())
+  const span2 = bounds2.getNorthEast().distanceTo(bounds2.getSouthWest())
+  const spanDiff = Math.abs(span1 - span2)
+  const avgSpan = (span1 + span2) / 2
+
+  return centerDiff < 0.001 && spanDiff / avgSpan < 0.1
+}
 
 // Handle zone selection
 function selectZone(zoneId: string) {
@@ -231,18 +281,41 @@ function getCenterPopupContent(zone: ZoneRecord) {
   `
 }
 
+// Debounced fit bounds to prevent flickering
+let fitBoundsTimeout: number | null = null
+
 // Fit map to bounds
 function fitBounds() {
   if (mapBounds.value && mapRef.value) {
-    mapRef.value.leafletObject.fitBounds(mapBounds.value, { padding: [20, 20] })
+    // Clear any pending timeout
+    if (fitBoundsTimeout) {
+      clearTimeout(fitBoundsTimeout)
+    }
+
+    // Debounce the fitBounds call
+    fitBoundsTimeout = setTimeout(() => {
+      if (mapRef.value && mapBounds.value) {
+        mapRef.value.leafletObject.fitBounds(mapBounds.value, { padding: [20, 20] })
+      }
+    }, 100)
   }
 }
+
+// Cleanup timeout on unmount
+onUnmounted(() => {
+  if (fitBoundsTimeout) {
+    clearTimeout(fitBoundsTimeout)
+  }
+})
 
 // Expose methods to parent component
 defineExpose({
   fitBounds,
   centerOnData,
   centerOnSelection,
+  changeLayer,
+  currentLayer,
+  tileLayers,
 })
 
 // Center map on selected zone
@@ -264,6 +337,11 @@ function centerOnData() {
     mapRef.value.leafletObject.setView(centerCoords, 10, { animate: true })
   }
 }
+
+// Change map layer
+function changeLayer(layerKey: string) {
+  currentLayer.value = layerKey
+}
 </script>
 
 <template>
@@ -276,12 +354,15 @@ function centerOnData() {
       :options="mapOptions"
       class="w-full h-full"
     >
-      <!-- OpenStreetMap Tiles -->
+      <!-- Dynamic Tile Layers -->
       <LTileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
-        layer-type="base"
-        name="OpenStreetMap"
+        v-for="(layer, key) in tileLayers"
+        :key="key"
+        :url="layer.url"
+        :attribution="layer.attribution"
+        :layer-type="layer.type"
+        :name="layer.name"
+        :options="{ opacity: key === currentLayer ? 1 : 0 }"
       />
 
       <!-- Zone Polygons -->
