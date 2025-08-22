@@ -2,8 +2,8 @@ import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 import { useZonesStore } from '@/stores/zones'
 
 export function requireZones(
-  to: RouteLocationNormalized,
-  from: RouteLocationNormalized,
+  _to: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
   next: NavigationGuardNext,
 ) {
   const zonesStore = useZonesStore()
