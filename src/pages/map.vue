@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Filter, Layers, MapPin } from 'lucide-vue-next'
+import { ArrowLeft, Layers, MapPin } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import MapView from '@/components/MapView.vue'
@@ -60,10 +60,11 @@ function clearFiltersAndFitMap() {
 
 function getCurrentLayerName() {
   if (mapViewRef.value?.currentLayer && mapViewRef.value?.tileLayers) {
-    const currentLayer = mapViewRef.value.currentLayer.value
-    return mapViewRef.value.tileLayers[currentLayer]?.name || 'Layers'
+    const currentLayer = mapViewRef.value.currentLayer
+    const layerName = mapViewRef.value.tileLayers[currentLayer]?.name
+    return layerName || 'OpenStreetMap' // Default to a meaningful name
   }
-  return 'Layers'
+  return 'OpenStreetMap' // Default fallback
 }
 
 function selectLayer(layerKey: string) {
@@ -116,7 +117,10 @@ onUnmounted(() => {
             @click="showLayersDropdown = !showLayersDropdown"
           >
             <Layers class="w-4 h-4" />
-            <span class="hidden sm:inline">{{ getCurrentLayerName() }}</span>
+            <div class="hidden sm:flex items-center gap-2">
+              <div class="w-2 h-2 bg-primary rounded-full" />
+              <span>{{ getCurrentLayerName() }}</span>
+            </div>
             <svg
               class="w-4 h-4 transition-transform"
               :class="{ 'rotate-180': showLayersDropdown }"
@@ -138,23 +142,22 @@ onUnmounted(() => {
                 v-for="(layer, key) in mapViewRef?.tileLayers || {}"
                 :key="key"
                 class="flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer hover:bg-muted transition-colors"
-                :class="{ 'bg-muted': mapViewRef?.currentLayer?.value === key }"
+                :class="{ 'bg-muted': mapViewRef?.currentLayer === key }"
                 @click="selectLayer(key as unknown as string)"
               >
-                <span>{{ layer.name }}</span>
-                <div
-                  v-if="mapViewRef?.currentLayer?.value === key"
-                  class="w-2 h-2 bg-primary rounded-full"
-                />
+                <div class="flex items-center gap-2">
+                  <div
+                    v-if="mapViewRef?.currentLayer === key"
+                    class="w-3 h-3 bg-primary rounded-full"
+                  />
+                  <span :class="{ 'font-medium': mapViewRef?.currentLayer === key }">
+                    {{ layer.name }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        <Button variant="outline" size="sm">
-          <Filter class="w-4 h-4 mr-2" />
-          Filter
-        </Button>
       </div>
     </header>
 

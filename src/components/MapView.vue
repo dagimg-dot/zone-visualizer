@@ -11,7 +11,7 @@ const zonesStore = useZonesStore()
 // Map state
 const mapRef = ref()
 const selectedZoneId = ref<string | null>(null)
-const currentLayer = ref('osm') // Default layer
+const currentLayer = ref<keyof typeof tileLayers>('osm') // Default layer
 
 // Available tile layers
 const tileLayers = {
@@ -252,7 +252,7 @@ function getCenterPopupContent(zone: ZoneRecord) {
   const formatCoordinate = (coord: [number, number]) => `${coord[0].toFixed(6)}, ${coord[1].toFixed(6)}`
 
   return `
-    <div class="center-popup">
+    <div class="center-popup p-4">
       <h3 class="font-semibold mb-2 text-base">Zone Center</h3>
       
       <div class="space-y-2">
@@ -340,7 +340,11 @@ function centerOnData() {
 
 // Change map layer
 function changeLayer(layerKey: string) {
-  currentLayer.value = layerKey
+  if (currentLayer.value === layerKey)
+    return // Already on this layer
+
+  // Update current layer - this will trigger a re-render with the new tiles
+  currentLayer.value = layerKey as keyof typeof tileLayers
 }
 </script>
 
@@ -354,15 +358,13 @@ function changeLayer(layerKey: string) {
       :options="mapOptions"
       class="w-full h-full"
     >
-      <!-- Dynamic Tile Layers -->
+      <!-- Single Dynamic Tile Layer -->
       <LTileLayer
-        v-for="(layer, key) in tileLayers"
-        :key="key"
-        :url="layer.url"
-        :attribution="layer.attribution"
-        :layer-type="layer.type"
-        :name="layer.name"
-        :options="{ opacity: key === currentLayer ? 1 : 0 }"
+        :key="currentLayer"
+        :url="tileLayers[currentLayer].url"
+        :attribution="tileLayers[currentLayer].attribution"
+        layer-type="base"
+        :name="tileLayers[currentLayer].name"
       />
 
       <!-- Zone Polygons -->
@@ -456,6 +458,14 @@ function changeLayer(layerKey: string) {
             :style="{ backgroundColor: item.color, opacity: 0.3 }"
           />
           <span class="truncate">{{ item.displayName }}</span>
+        </div>
+      </div>
+
+      <!-- Current Layer Info -->
+      <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-muted-foreground">Map Layer:</span>
+          <span class="font-medium">{{ tileLayers[currentLayer]?.name }}</span>
         </div>
       </div>
     </div>
