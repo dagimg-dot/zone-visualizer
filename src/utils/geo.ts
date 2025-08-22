@@ -8,6 +8,13 @@ export function swapCoordinates(coords: [number, number]): [number, number] {
 }
 
 /**
+ * Convert GeoJSON coordinates array to Leaflet format for MapView component
+ */
+export function convertGeoJSONToLeaflet(coords: [number, number][]): [number, number][] {
+  return coords.map(coord => swapCoordinates(coord))
+}
+
+/**
  * Convert polygon coordinates from GeoJSON to Leaflet format
  */
 export function convertPolygonCoordinates(polygon: PolygonGeoJSON): number[][][] {

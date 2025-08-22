@@ -142,3 +142,35 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Leaflet CSS fixes */
+.leaflet-container {
+  font-family: inherit;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-content {
+  margin: 12px;
+  min-width: 200px;
+}
+
+.leaflet-popup-tip {
+  background: white;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+.dark .leaflet-popup-tip {
+  background: #1f2937;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  border: 1px solid #374151;
+}

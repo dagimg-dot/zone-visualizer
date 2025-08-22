@@ -6,6 +6,7 @@ import { requireZones } from '@/utils/router'
 import App from './App.vue'
 
 import './style.css'
+import 'leaflet/dist/leaflet.css'
 
 const router = createRouter({
   history: createWebHistory(),
