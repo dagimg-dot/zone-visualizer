@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Home from '@/pages/Home.vue'
+// App.vue now uses auto-generated router-view from unplugin-vue-router
 </script>
 
 <template>
-  <Home />
+  <router-view />
 </template>
 
 <style scoped>

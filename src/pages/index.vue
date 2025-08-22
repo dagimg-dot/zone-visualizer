@@ -1,14 +1,29 @@
 <script setup lang="ts">
 import { MapPin, Upload } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import DarkModeToggle from '@/components/DarkModeToggle.vue'
 import { Button } from '@/components/ui/button'
 import { useZonesStore } from '@/stores/zones'
 
 const zonesStore = useZonesStore()
+const route = useRoute()
+const router = useRouter()
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const isDragging = ref(false)
 const message = ref('')
+const messageType = ref<'success' | 'warning' | 'error'>('success')
+
+// Handle route query parameters for notifications
+onMounted(() => {
+  if (route.query.message) {
+    message.value = route.query.message as string
+    messageType.value = (route.query.type as 'success' | 'warning' | 'error') || 'warning'
+
+    // Clear the query parameters
+    router.replace({ path: '/', query: {} })
+  }
+})
 
 function openFilePicker() {
   fileInputRef.value?.click()
@@ -21,6 +36,7 @@ async function handleFiles(files: FileList | null) {
   const file = files[0]
   if (!file.name.toLowerCase().endsWith('.json')) {
     message.value = 'Please select a JSON file.'
+    messageType.value = 'error'
     return
   }
 
@@ -29,12 +45,19 @@ async function handleFiles(files: FileList | null) {
     message.value = result.message
 
     if (result.success) {
-      // TODO: Navigate to map view
-      message.value = 'File loaded successfully! Map view coming soon...'
+      messageType.value = 'success'
+      // Navigate to map view after successful upload
+      setTimeout(() => {
+        router.push('/map')
+      }, 1000)
+    }
+    else {
+      messageType.value = 'error'
     }
   }
   catch {
     message.value = 'Failed to process file.'
+    messageType.value = 'error'
   }
 }
 
@@ -84,6 +107,22 @@ function onDragEnd() {
           <span class="text-2xl font-bold text-muted-foreground">}</span>
           <span class="text-lg font-semibold tracking-tight ml-2">Zone Visualizer</span>
         </div>
+
+        <!-- Navigation -->
+        <nav class="flex items-center gap-6">
+          <router-link
+            to="/about"
+            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            About
+          </router-link>
+          <router-link
+            to="/settings"
+            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Settings
+          </router-link>
+        </nav>
 
         <!-- Dark mode toggle -->
         <DarkModeToggle />
@@ -149,10 +188,31 @@ function onDragEnd() {
           >
         </div>
 
+        <!-- View Map Button (shown when zones are loaded) -->
+        <div v-if="zonesStore.hasZones" class="flex items-center justify-center pt-2">
+          <Button
+            variant="outline"
+            size="lg"
+            class="text-lg px-8 py-6 h-auto"
+            @click="router.push('/map')"
+          >
+            <MapPin class="w-5 h-5 mr-2" />
+            View Map
+          </Button>
+        </div>
+
         <!-- Message -->
-        <p v-if="message" class="text-sm text-muted-foreground max-w-md mx-auto">
-          {{ message }}
-        </p>
+        <div v-if="message" class="max-w-md mx-auto">
+          <p
+            class="text-sm px-4 py-2 rounded-md" :class="[
+              messageType === 'success' && 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+              messageType === 'warning' && 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+              messageType === 'error' && 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+            ]"
+          >
+            {{ message }}
+          </p>
+        </div>
 
         <!-- Drag hint -->
         <p class="text-sm text-muted-foreground/60">

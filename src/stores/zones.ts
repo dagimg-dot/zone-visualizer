@@ -47,6 +47,7 @@ export const useZonesStore = defineStore('zones', () => {
 
   const totalCount = computed(() => zones.value.length)
   const filteredCount = computed(() => filteredZones.value.length)
+  const hasZones = computed(() => zones.value.length > 0)
 
   // Actions
   function loadFromFile(file: File): Promise<{ success: boolean, message: string }> {
@@ -138,6 +139,7 @@ export const useZonesStore = defineStore('zones', () => {
     colorByCityId,
     totalCount,
     filteredCount,
+    hasZones,
 
     // Actions
     loadFromFile,
