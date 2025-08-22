@@ -119,7 +119,7 @@ function onDragEnd() {
         <!-- Logo Icon -->
         <div class="flex items-center justify-center gap-3 mb-8">
           <span class="text-4xl font-bold text-muted-foreground">{</span>
-          <MapPin class="w-10 h-10 text-primary" />
+          <MapPin class="w-16 h-16 text-primary" />
           <span class="text-4xl font-bold text-muted-foreground">}</span>
         </div>
 
