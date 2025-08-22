@@ -10,6 +10,12 @@ const zonesStore = useZonesStore()
 function goBack() {
   router.push('/')
 }
+
+function clearAllData() {
+  zonesStore.clearAllData()
+  // Redirect back to home after clearing data
+  router.push('/')
+}
 </script>
 
 <template>
@@ -91,6 +97,25 @@ function goBack() {
                     class="flex-1 px-3 py-2 text-sm border rounded-md bg-background"
                   >
                 </div>
+              </div>
+            </div>
+
+            <div class="bg-background p-4 rounded-lg border">
+              <h3 class="font-medium mb-2">
+                Data Management
+              </h3>
+              <div class="space-y-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="w-full"
+                  @click="clearAllData"
+                >
+                  Clear All Data
+                </Button>
+                <p class="text-xs text-muted-foreground">
+                  This will remove all zones and filters from localStorage
+                </p>
               </div>
             </div>
           </div>

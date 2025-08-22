@@ -1,16 +1,17 @@
 import type { ZoneRecord } from '@/types/zones'
+import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { generateColorPalette } from '@/utils/color'
 import { processZoneRecords } from '@/utils/geo'
 
 export const useZonesStore = defineStore('zones', () => {
-  // State
-  const zones = ref<ZoneRecord[]>([])
-  const selectedZoneId = ref<string | null>(null)
-  const filterText = ref('')
-  const filterRow = ref<number | null>(null)
-  const filterCol = ref<number | null>(null)
+  // State with localStorage persistence
+  const zones = useStorage<ZoneRecord[]>('zone-visualizer-zones', [])
+  const selectedZoneId = useStorage<string | null>('zone-visualizer-selected-zone', null)
+  const filterText = useStorage<string>('zone-visualizer-filter-text', '')
+  const filterRow = useStorage<number | null>('zone-visualizer-filter-row', null)
+  const filterCol = useStorage<number | null>('zone-visualizer-filter-col', null)
 
   // Getters
   const validZones = computed(() => zones.value)
@@ -124,6 +125,22 @@ export const useZonesStore = defineStore('zones', () => {
     clearFilters()
   }
 
+  function clearAllData() {
+    // Clear all localStorage data
+    localStorage.removeItem('zone-visualizer-zones')
+    localStorage.removeItem('zone-visualizer-selected-zone')
+    localStorage.removeItem('zone-visualizer-filter-text')
+    localStorage.removeItem('zone-visualizer-filter-row')
+    localStorage.removeItem('zone-visualizer-filter-col')
+
+    // Reset all values
+    zones.value = []
+    selectedZoneId.value = null
+    filterText.value = ''
+    filterRow.value = null
+    filterCol.value = null
+  }
+
   return {
     // State
     zones,
@@ -149,5 +166,6 @@ export const useZonesStore = defineStore('zones', () => {
     setColFilter,
     clearFilters,
     clearZones,
+    clearAllData,
   }
 })

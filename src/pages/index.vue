@@ -23,6 +23,17 @@ onMounted(() => {
     // Clear the query parameters
     router.replace({ path: '/', query: {} })
   }
+
+  // Show message if zones are loaded from localStorage
+  if (zonesStore.hasZones) {
+    message.value = `Loaded ${zonesStore.totalCount} zones from previous session.`
+    messageType.value = 'success'
+
+    // Clear the message after 3 seconds
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
 })
 
 function openFilePicker() {
@@ -92,6 +103,12 @@ function onDragLeave(e: DragEvent) {
 
 function onDragEnd() {
   isDragging.value = false
+}
+
+function clearAllData() {
+  zonesStore.clearAllData()
+  message.value = 'All data cleared successfully.'
+  messageType.value = 'success'
 }
 </script>
 
@@ -189,7 +206,7 @@ function onDragEnd() {
         </div>
 
         <!-- View Map Button (shown when zones are loaded) -->
-        <div v-if="zonesStore.hasZones" class="flex items-center justify-center pt-2">
+        <div v-if="zonesStore.hasZones" class="flex items-center justify-center gap-4 pt-2">
           <Button
             variant="outline"
             size="lg"
@@ -198,6 +215,15 @@ function onDragEnd() {
           >
             <MapPin class="w-5 h-5 mr-2" />
             View Map
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-muted-foreground hover:text-destructive"
+            @click="clearAllData"
+          >
+            Clear Data
           </Button>
         </div>
 
