@@ -1,12 +1,17 @@
 <script setup lang="ts">
-// Simple component to test Tailwind CSS
+import { Button } from '@/components/ui/button'
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 flex items-center justify-center">
-    <h1 class="text-4xl font-bold text-red-500">
-      zone visualizer by jd
-    </h1>
+  <div class="min-h-screen bg-background flex items-center justify-center">
+    <div class="text-center space-y-4">
+      <h1 class="text-4xl font-bold text-foreground">
+        Zone Visualizer
+      </h1>
+      <Button size="lg">
+        Upload JSON
+      </Button>
+    </div>
   </div>
 </template>
 
