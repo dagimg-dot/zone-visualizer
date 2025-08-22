@@ -125,22 +125,6 @@ function clearAllData() {
           <span class="text-lg font-semibold tracking-tight ml-2">Zone Visualizer</span>
         </div>
 
-        <!-- Navigation -->
-        <nav class="flex items-center gap-6">
-          <router-link
-            to="/about"
-            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            About
-          </router-link>
-          <router-link
-            to="/settings"
-            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Settings
-          </router-link>
-        </nav>
-
         <!-- Dark mode toggle -->
         <DarkModeToggle />
       </div>
